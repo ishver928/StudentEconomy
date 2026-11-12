@@ -13,7 +13,14 @@ function pool(): Pool {
     connectionString: url,
     ssl: local ? false : { rejectUnauthorized: false },
     max: 5,
+    // Fail fast instead of hanging a page forever if the database is unreachable or slow.
+    connectionTimeoutMillis: 10_000,
+    query_timeout: 15_000,
+    idleTimeoutMillis: 30_000,
+    keepAlive: true,
   });
+  // Render may drop idle connections; without a listener that error would crash the server.
+  globalForDb.pgPool.on('error', (err) => console.error('[db] idle client error:', err.name));
   return globalForDb.pgPool;
 }
 

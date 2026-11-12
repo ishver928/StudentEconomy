@@ -4,6 +4,7 @@
 
 const BASE_URL = 'https://api-m.sandbox.paypal.com';
 const MAX_ATTEMPTS = 4;
+const REQUEST_TIMEOUT_MS = 20_000;
 
 export class PayPalApiError extends Error {
   constructor(
@@ -32,6 +33,7 @@ async function accessToken(): Promise<string> {
     },
     body: 'grant_type=client_credentials',
     cache: 'no-store',
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), // never hang a page on a slow PayPal call
   });
   if (!res.ok) throw new PayPalApiError(res.status, '/v1/oauth2/token', await res.text());
 
@@ -46,6 +48,7 @@ async function get<T>(path: string): Promise<T> {
     const res = await fetch(`${BASE_URL}${path}`, {
       headers: { Authorization: `Bearer ${await accessToken()}` },
       cache: 'no-store',
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), // never hang a page on a slow PayPal call
     });
     if (res.ok) return (await res.json()) as T;
 
@@ -247,6 +250,7 @@ async function post<T>(path: string, requestId: string, body?: unknown): Promise
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: 'no-store',
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS), // never hang a page on a slow PayPal call
     });
     if (res.ok) return (await res.json()) as T;
     if (res.status === 401 && attempt === 1) {
@@ -318,4 +322,10 @@ export function captureOrder(id: string, requestId: string): Promise<Order> {
 }
 
 // The buyer approval link: `payer-action` when payment_source is sent, `approve` otherwise.
-export const approvalUrl = (o: Order) => o.links?.find((l) => l.rel === 'payer-action' || l.rel === 'approve')?.href;
+// Only sandbox links are accepted, so a buyer can never be sent to live PayPal.
+export function approvalUrl(o: Order): string | undefined {
+  const href = o.links?.find((l) => l.rel === 'payer-action' || l.rel === 'approve')?.href;
+  if (!href) return undefined;
+  const u = new URL(href);
+  return u.protocol === 'https:' && u.hostname === 'www.sandbox.paypal.com' ? href : undefined;
+}
