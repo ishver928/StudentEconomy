@@ -12,6 +12,6 @@ export async function askNavigator(_prev: NavigatorState, form: FormData): Promi
   try {
     return { plan: await buildPlan(question, student) };
   } catch {
-    return { error: "The Navigator couldn't load StudentEconomy data right now. Please try again." };
+    return { error: "The Navigator couldn't load Sprout data right now. Please try again." };
   }
 }

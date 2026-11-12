@@ -1,4 +1,4 @@
-// The six areas of StudentEconomy, shared by the nav and the homepage islands.
+// The six areas of Sprout, shared by the nav and the homepage islands.
 export const SECTIONS = [
   { href: '/marketplace', label: 'Marketplace', emoji: '🛍️', blurb: 'Buy and sell campus gear', color: 'var(--se-peach)' },
   { href: '/community', label: 'Community', emoji: '🤝', blurb: 'Meet opt-in classmates', color: 'var(--se-lavender)' },

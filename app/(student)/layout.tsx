@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SproutLogo } from '../sprout-logo';
 import { query } from '@/lib/db';
 import { getStudent } from '@/lib/student';
 import { Nav } from './nav';
@@ -26,7 +27,9 @@ export default async function StudentLayout({ children }: { children: React.Reac
       </p>
       <header className="border-b-2 border-se-charcoal/10 bg-se-sky/40">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 pt-3">
-          <Link href="/" className="text-xl font-extrabold">🏝️ StudentEconomy</Link>
+          <Link href="/" className="flex items-center gap-2 text-xl font-extrabold">
+            <SproutLogo className="size-9" title="Sprout logo" /> Sprout
+          </Link>
           {student && (
             <form action={resetOnboarding} className="flex items-center gap-2 text-sm">
               <span>Hi, {student.firstName || 'there'}!</span>
@@ -40,7 +43,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
         {student ? children : <Onboarding schoolSuggestions={await schoolSuggestions()} />}
       </main>
       <footer className="px-4 py-6 text-center text-sm text-se-charcoal/60">
-        StudentEconomy · Sandbox prototype · Demo-only identity (browser cookie, not real sign-in) · <Link href="/dashboard" className="underline">PayPal data dashboard</Link>
+        Sprout 🌱 Small beginnings. Big opportunities. · Sandbox prototype · Demo-only identity (browser cookie, not real sign-in) · <Link href="/dashboard" className="underline">PayPal data dashboard</Link>
       </footer>
     </div>
   );

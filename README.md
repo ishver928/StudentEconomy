@@ -1,3 +1,23 @@
+<p align="center"><img src="app/icon.svg" width="96" alt="Sprout logo"></p>
+
+# Sprout 🌱
+
+**Small beginnings. Big opportunities.**
+
+Sprout is your student opportunity ecosystem: a cozy, floating-island campus where students buy and sell gear, fund goals together, find events and skills, and plan their next step with AI.
+
+- **Marketplace** with PayPal sandbox checkout (server-side pricing, verified captures)
+- **Funding Goals** with PayPal sandbox contributions
+- **AI Opportunity Navigator** (Claude) grounded in real platform data
+- **My Finances** with an interactive AG Studio dashboard
+- Community, Club Events, SkillSwap, and Travel
+
+> PayPal Sandbox only: no real money moves. Sample listings, goals, and profiles are fictional.
+
+The sections below document the PayPal + AG Studio hackathon boilerplate that Sprout is built on.
+
+---
+
 > [!TIP]
 > **PayPal AI Hackathon**
 > 

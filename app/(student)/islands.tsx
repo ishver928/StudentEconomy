@@ -1,5 +1,6 @@
 // The floating-island campus map on the homepage. Pure SVG + CSS (see .se-island in globals.css).
 import Link from 'next/link';
+import { SproutLogo } from '../sprout-logo';
 import { SECTIONS } from './sections';
 
 // A small landmark drawn on top of each island, in the same order as SECTIONS.
@@ -66,7 +67,7 @@ function IslandArt({ color, index }: { color: string; index: number }) {
 function Mascot() {
   // A simple geometric student: round head, graduation cap, backpack, waving arm.
   return (
-    <svg viewBox="0 0 120 150" className="se-mascot w-24 sm:w-28" role="img" aria-label="StudentEconomy mascot waving hello">
+    <svg viewBox="0 0 120 150" className="se-mascot w-24 sm:w-28" role="img" aria-label="Sprout mascot waving hello">
       <rect x="30" y="72" width="60" height="56" rx="26" fill="#9fd3f0" stroke="#3b3633" strokeWidth="3" />
       <rect x="22" y="80" width="16" height="34" rx="7" fill="#b5d3a8" stroke="#3b3633" strokeWidth="3" />
       <g className="se-mascot-arm">
@@ -98,8 +99,11 @@ export function IslandWorld({ name }: { name: string }) {
         <div className="flex flex-col items-center gap-2 text-center sm:flex-row sm:justify-center sm:gap-5 sm:text-left">
           <Mascot />
           <div>
+            <p className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-white/85 py-1 pl-1 pr-3 text-sm font-extrabold shadow-sm">
+              <SproutLogo className="size-7" title="Sprout logo" /> Sprout · Small beginnings. Big opportunities.
+            </p>
             <h1 id="world-title" className="text-3xl font-extrabold sm:text-5xl">Hi, {name}!</h1>
-            <p className="mt-1 text-lg text-se-charcoal/80">Welcome to your floating campus. Pick an island to explore.</p>
+            <p className="mt-1 text-lg text-se-charcoal/80">Welcome to Sprout, your student opportunity ecosystem. Pick an island to explore.</p>
             <Link href="/navigator" className="se-pill mt-3 inline-block bg-white/85 hover:bg-white">🧭 Ask the AI Navigator to plan a goal</Link>
           </div>
         </div>

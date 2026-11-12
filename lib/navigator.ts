@@ -1,4 +1,4 @@
-// AI Opportunity Navigator: server-only. Builds a plan from real StudentEconomy data.
+// AI Opportunity Navigator: server-only. Builds a plan from real Sprout data.
 // Live mode (ANTHROPIC_API_KEY set): Claude writes the plan but may only reference items by the ids
 // we give it; unknown ids are dropped and item titles/prices are always rendered from the database.
 // Demo mode (no key, or the AI call fails): a deterministic, clearly labeled rule-based plan.
@@ -106,7 +106,7 @@ function demoPlan(question: string, student: Student, data: Data, note?: string)
       ? { title: `Fund part of your ${usd(budgetCents)} with a goal`, detail: `Funding goals go up to ${cap}, so start with a goal for one piece of the cost (pre-filled at ${cap}) and cover the rest with the ideas below.`, refs: [] }
       : { title: `Set a ${usd(budgetCents)} funding goal`, detail: `Turn your plan into a goal classmates can chip in to. We pre-filled "${draft.title}" with your ${usd(budgetCents)} target; adjust it before saving.`, refs: [] };
   const steps: PlanStep[] = [first];
-  if (events.length) steps.push({ title: 'Go to related events', detail: 'These upcoming StudentEconomy events match your plan: a good place to find teammates or share your goal.', refs: events });
+  if (events.length) steps.push({ title: 'Go to related events', detail: 'These upcoming Sprout events match your plan: a good place to find teammates or share your goal.', refs: events });
   if (goals.length) steps.push({ title: 'Team up with similar goals', detail: 'Other students are funding related plans. Compare targets or coordinate to share costs.', refs: goals });
   if (skills.length) steps.push({ title: 'Trade skills instead of cash', detail: 'Students offer these related skills on SkillSwap.', refs: skills });
   if (listings.length) steps.push({ title: 'Buy used, not new', detail: 'These available listings match what you described and cost less than new.', refs: listings });
@@ -122,8 +122,8 @@ function demoPlan(question: string, student: Student, data: Data, note?: string)
     question,
     budgetCents,
     summary: nothing
-      ? `Hi ${name}! StudentEconomy doesn't have listings, events, goals, or skills that match this yet, so this plan focuses on your own funding goal and general ideas.`
-      : `Hi ${name}! Here's a plan to reach ${budgetCents ? usd(budgetCents) : 'your goal'} using matching resources on StudentEconomy, plus general ideas to close the gap.`,
+      ? `Hi ${name}! Sprout doesn't have listings, events, goals, or skills that match this yet, so this plan focuses on your own funding goal and general ideas.`
+      : `Hi ${name}! Here's a plan to reach ${budgetCents ? usd(budgetCents) : 'your goal'} using matching resources on Sprout, plus general ideas to close the gap.`,
     steps,
     noMatches: nothing ? [] : noMatches,
     tips: [
@@ -149,12 +149,12 @@ function demoPlan(question: string, student: Student, data: Data, note?: string)
 
 async function livePlan(question: string, student: Student, data: Data): Promise<Plan> {
   const catalog = [...data.refs.entries()].map(([key, r]) => `${key} | ${r.title} | ${r.meta}`).join('\n');
-  const system = `You are the StudentEconomy Opportunity Navigator, a friendly financial coach for college students.
+  const system = `You are the Sprout Opportunity Navigator, a friendly financial coach for college students.
 Write a practical, encouraging action plan for the student's goal.
 STRICT RULES:
 - Only reference platform items by their exact key from the CATALOG (e.g. "listing:abc"). Never invent listings, goals, events, skills, or prices.
 - Reference an item ONLY if it directly helps with this specific goal. Referencing nothing is fine. Never pad the plan with unrelated items (e.g. no hackathon events or bike locks for a tuition question).
-- If no catalog item is relevant, say plainly in the summary that StudentEconomy doesn't currently have matching resources, and focus on a funding goal and general advice.
+- If no catalog item is relevant, say plainly in the summary that Sprout doesn't currently have matching resources, and focus on a funding goal and general advice.
 - Funding goals support targets from $1 to $${MAX_GOAL_DOLLARS}; if the need is larger, suggest a goal for part of it.
 - Put general advice that is not a catalog item in "tips". Do not state specific outside prices, scholarships, or programs as facts.
 - Never tell the student a payment was made; payments always require their explicit approval in PayPal.

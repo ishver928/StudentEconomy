@@ -28,7 +28,7 @@ function buildData(d: FinanceData): AgDataSourcesDefinition {
   const dates = [...d.transactions.map((t) => t.date), ...d.received.map((r) => r.date)].sort();
   const today = d.asOf.slice(0, 10);
   return {
-    description: "One student's PayPal sandbox activity on StudentEconomy (USD). Only completed, PayPal-verified transactions.",
+    description: "One student's PayPal sandbox activity on Sprout (USD). Only completed, PayPal-verified transactions.",
     sources: [
       {
         id: 'transactions',
@@ -222,7 +222,7 @@ const buildReport = (FONT: string): AgReportState => ({
   ],
 });
 
-// ---- Theme: StudentEconomy pastels ----------------------------------------------------
+// ---- Theme: Sprout pastels ----------------------------------------------------
 
 const PALETTE = ['#7cc4ea', '#ff9f80', '#8fc27f', '#b89be0', '#ffcf5c', '#f08fb0', '#5fb3a8', '#e6a86b', '#9aa7f0', '#c9b28f'];
 const buildTheme = (FONT: string) => studioTheme.withParams({

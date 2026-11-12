@@ -15,10 +15,11 @@ const nunito = Nunito({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s · StudentEconomy",
-    default: "StudentEconomy",
+    template: "%s · Sprout",
+    default: "Sprout · Small beginnings. Big opportunities.",
   },
-  description: "A cozy campus economy for students: marketplace, community, club events, and finances.",
+  description: "Sprout: your student opportunity ecosystem. Marketplace, community, club events, funding goals, and finances.",
+  applicationName: "Sprout",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
