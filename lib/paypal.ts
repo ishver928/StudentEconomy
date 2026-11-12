@@ -9,7 +9,7 @@ export class PayPalApiError extends Error {
   constructor(
     readonly status: number,
     readonly path: string,
-    body: string,
+    readonly body: string,
   ) {
     super(`PayPal ${status} on ${path}: ${body.slice(0, 300)}`);
     this.name = 'PayPalApiError';
@@ -221,3 +221,99 @@ export type Balances = {
 export function getBalances(): Promise<Balances> {
   return get<Balances>('/v1/reporting/balances');
 }
+
+// --- Orders v2 (marketplace checkout) ----------------------------------------------
+
+// The first `details[].issue` of a PayPal error response, e.g. ORDER_ALREADY_CAPTURED.
+export function paypalIssue(err: unknown): string | undefined {
+  if (!(err instanceof PayPalApiError)) return undefined;
+  try {
+    return (JSON.parse(err.body) as { details?: { issue?: string }[] }).details?.[0]?.issue;
+  } catch {
+    return undefined;
+  }
+}
+
+// POST with a PayPal-Request-Id, so retries (ours or the caller's) are idempotent at PayPal.
+async function post<T>(path: string, requestId: string, body?: unknown): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${await accessToken()}`,
+        'Content-Type': 'application/json',
+        'PayPal-Request-Id': requestId,
+        Prefer: 'return=representation',
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store',
+    });
+    if (res.ok) return (await res.json()) as T;
+    if (res.status === 401 && attempt === 1) {
+      cachedToken = undefined;
+      continue;
+    }
+    if ((res.status === 429 || res.status >= 500) && attempt < MAX_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 250));
+      continue;
+    }
+    throw new PayPalApiError(res.status, path, await res.text());
+  }
+}
+
+export type OrderStatus = 'CREATED' | 'SAVED' | 'APPROVED' | 'VOIDED' | 'COMPLETED' | 'PAYER_ACTION_REQUIRED';
+export type CaptureStatus = 'COMPLETED' | 'DECLINED' | 'PARTIALLY_REFUNDED' | 'PENDING' | 'REFUNDED' | 'FAILED';
+
+export type Capture = { id: string; status: CaptureStatus; amount?: Money; status_details?: { reason?: string } };
+
+export type Order = {
+  id: string;
+  status: OrderStatus;
+  links?: { href: string; rel: string; method?: string }[];
+  purchase_units?: {
+    reference_id?: string;
+    custom_id?: string;
+    amount?: Money;
+    payments?: { captures?: Capture[] };
+  }[];
+};
+
+export type NewOrder = {
+  referenceId: string;
+  customId: string;
+  description: string;
+  amount: Money;
+  returnUrl: string;
+  cancelUrl: string;
+};
+
+export function createOrder(o: NewOrder, requestId: string): Promise<Order> {
+  return post<Order>('/v2/checkout/orders', requestId, {
+    intent: 'CAPTURE',
+    purchase_units: [
+      { reference_id: o.referenceId, custom_id: o.customId, description: o.description.slice(0, 127), amount: o.amount },
+    ],
+    payment_source: {
+      paypal: {
+        experience_context: {
+          brand_name: 'StudentEconomy',
+          user_action: 'PAY_NOW',
+          shipping_preference: 'NO_SHIPPING',
+          return_url: o.returnUrl,
+          cancel_url: o.cancelUrl,
+        },
+      },
+    },
+  });
+}
+
+export function getOrder(id: string): Promise<Order> {
+  return get<Order>(`/v2/checkout/orders/${encodeURIComponent(id)}`);
+}
+
+export function captureOrder(id: string, requestId: string): Promise<Order> {
+  return post<Order>(`/v2/checkout/orders/${encodeURIComponent(id)}/capture`, requestId);
+}
+
+// The buyer approval link: `payer-action` when payment_source is sent, `approve` otherwise.
+export const approvalUrl = (o: Order) => o.links?.find((l) => l.rel === 'payer-action' || l.rel === 'approve')?.href;
