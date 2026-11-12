@@ -298,6 +298,8 @@ export function createOrder(o: NewOrder, requestId: string): Promise<Order> {
         experience_context: {
           brand_name: 'StudentEconomy',
           user_action: 'PAY_NOW',
+          landing_page: 'LOGIN', // open PayPal's sign-in page rather than the guest card form
+
           shipping_preference: 'NO_SHIPPING',
           return_url: o.returnUrl,
           cancel_url: o.cancelUrl,
