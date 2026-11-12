@@ -52,7 +52,12 @@ function PlanView({ plan }: { plan: Plan }) {
         </p>
         {plan.modeNote && <p className="mt-1 text-sm font-semibold text-se-charcoal/70">{plan.modeNote}</p>}
         <p className="mt-2 text-lg font-semibold">{plan.summary}</p>
-        <Link href={goalHref} className="se-button mt-4 inline-block text-base">🎯 Create this funding goal</Link>
+        {plan.noMatches.length > 0 && (
+          <p className="mt-2 text-sm text-se-charcoal/70">StudentEconomy doesn&apos;t have matching {plan.noMatches.join(', ')} for this yet.</p>
+        )}
+        <Link href={goalHref} className="se-button mt-4 inline-block text-base">
+          🎯 {plan.goal.target ? 'Create this funding goal' : 'Create a funding goal'}
+        </Link>
       </div>
 
       <ol className="grid gap-4">

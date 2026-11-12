@@ -15,12 +15,13 @@ export type Plan = {
   budgetCents: number | null;
   summary: string;
   steps: PlanStep[];
+  noMatches: string[]; // platform categories with nothing relevant (demo mode)
   tips: string[];
   goal: { title: string; target: string; description: string; kind: string };
 };
 
 const usd = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-const STOP = new Set(['want', 'need', 'help', 'make', 'happen', 'student', 'attend', 'with', 'that', 'this', 'have', 'from', 'about', 'some', 'what', 'would', 'like', 'into', 'your', 'their', 'there', 'expenses']);
+const STOP = new Set(['college', 'university', 'school', 'money', 'cost', 'costs', 'afford', 'dollars', 'paying', 'next', 'year', 'want','need', 'help', 'make', 'happen', 'student', 'attend', 'with', 'that', 'this', 'have', 'from', 'about', 'some', 'what', 'would', 'like', 'into', 'your', 'their', 'there', 'expenses']);
 
 // ---- Platform data ----------------------------------------------------------------
 
@@ -52,7 +53,7 @@ export function parseBudget(text: string): number | null {
   const m = text.match(/\$\s?(\d{1,3}(?:,\d{3})+|\d{1,6})(?:\.(\d{1,2}))?/) ?? text.match(/\b(\d{1,6})\s*(?:dollars|usd|bucks)\b/i);
   if (!m) return null;
   const cents = Number(m[1].replace(/,/g, '')) * 100 + Number((m[2] ?? '').padEnd(2, '0') || 0);
-  return cents > 0 && cents <= 10_000_00 ? cents : null;
+  return cents > 0 && cents <= 1_000_000_000 ? cents : null; // up to $10M; goal targets are capped separately
 }
 
 const keywords = (text: string) =>
@@ -63,16 +64,15 @@ function score(words: string[], ...fields: (string | null)[]) {
   return words.reduce((n, w) => n + (hay.includes(w.replace(/s$/, '')) ? 1 : 0), 0);
 }
 
+export const MAX_GOAL_DOLLARS = 10_000; // matches the funding-goal form limit
+
 function goalDraft(question: string, budgetCents: number | null) {
   const q = question.toLowerCase();
-  const topic = /hackathon/.test(q) ? 'Hackathon' : /conference/.test(q) ? 'Conference' : /study abroad/.test(q) ? 'Study abroad' : null;
-  const travel = /travel|trip|flight|bus|hotel|attend|conference|hackathon/.test(q);
-  return {
-    title: topic ? `${topic} travel fund` : travel ? 'Travel fund' : 'My funding goal',
-    target: budgetCents ? String(budgetCents / 100) : '',
-    description: question.slice(0, 300),
-    kind: travel ? 'travel' : 'personal',
-  };
+  const travel = /travel|trip|flight|hotel|attend|conference|hackathon/.test(q);
+  const title = /hackathon/.test(q) ? 'Hackathon travel fund' : /conference/.test(q) ? 'Conference travel fund'
+    : /study abroad/.test(q) ? 'Study abroad fund' : /tuition/.test(q) ? 'Tuition fund' : travel ? 'Travel fund' : 'My funding goal';
+  const dollars = budgetCents ? Math.min(budgetCents / 100, MAX_GOAL_DOLLARS) : null;
+  return { title, target: dollars ? String(dollars) : '', description: question.slice(0, 300), kind: travel ? 'travel' : 'personal' };
 }
 
 // ---- Demo mode (deterministic) ------------------------------------------------------
@@ -81,59 +81,64 @@ function demoPlan(question: string, student: Student, data: Data, note?: string)
   const words = keywords(question);
   const budgetCents = parseBudget(question);
   const travel = /travel|trip|attend|hackathon|conference/i.test(question);
-  // Top-n by score; when something matches well (score >= 1), weak matches are dropped.
-  const pick = <T extends { id: string }>(items: T[], kind: RefKind, rank: (x: T) => number, n: number) => {
-    const ranked = items.map((x) => ({ x, s: rank(x) })).sort((a, b) => b.s - a.s).slice(0, n);
-    const strong = (ranked[0]?.s ?? 0) >= 1;
-    return ranked
-      .filter((r) => !strong || r.s >= 1)
+  const tuition = /tuition|semester fees|school fees|financial aid/i.test(question);
+  // Only items whose text actually matches the question: no filler recommendations.
+  const pick = <T extends { id: string }>(items: T[], kind: RefKind, fields: (x: T) => (string | null)[], n: number) =>
+    items
+      .map((x) => ({ x, s: score(words, ...fields(x)) }))
+      .filter((r) => r.s >= 1)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, n)
       .map((r) => data.refs.get(`${kind}:${r.x.id}`))
       .filter((r): r is PlanRef => !!r);
-  };
 
-  const events = pick(data.events, 'event', (e) => score(words, e.title, e.description, e.club_name) * 2 + 0.1, 2);
-  const goals = pick(data.goals, 'goal', (g) => score(words, g.title, g.description) * 2 + (travel && g.kind === 'travel' ? 1 : 0) + 0.1, 2);
-  const skills = pick(data.skills, 'skill', (s) => (s.rate_cents ?? 0) / 1000 + score(words, s.title, s.description), 3);
-  const gearCats = travel ? ['transport', 'electronics'] : [];
-  const listings = pick(
-    data.listings,
-    'listing',
-    (l) => score(words, l.title, l.description, l.category) * 2 + (gearCats.includes(l.category.toLowerCase()) ? 1 : 0) + 0.01,
-    3,
-  );
+  const events = pick(data.events, 'event', (e) => [e.title, e.description, e.club_name], 2);
+  const goals = pick(data.goals, 'goal', (g) => [g.title, g.description], 2);
+  const skills = pick(data.skills, 'skill', (k) => [k.title, k.description, k.category], 3);
+  const listings = pick(data.listings, 'listing', (l) => [l.title, l.description, l.category], 3);
   const draft = goalDraft(question, budgetCents);
-  const target = budgetCents ? usd(budgetCents) : 'your target';
   const name = student.firstName || 'there';
+  const cap = usd(MAX_GOAL_DOLLARS * 100);
 
-  const steps: PlanStep[] = [
-    {
-      title: `Set a ${target} funding goal`,
-      detail: `Turn your plan into a goal classmates can chip in to. We pre-filled "${draft.title}"${budgetCents ? ` with your ${target} target` : ''}; adjust it before saving.`,
-      refs: [],
-    },
-  ];
-  if (events.length) steps.push({ title: 'Show up where your people are', detail: 'These upcoming events on StudentEconomy match your plan: a good place to find teammates or share your goal.', refs: events });
-  if (goals.length) steps.push({ title: 'Team up with similar goals', detail: 'Other students are funding related plans. Compare targets, or coordinate to share rides and rooms.', refs: goals });
-  if (skills.length) steps.push({ title: 'Earn or trade with your skills', detail: 'Students offer these skills on SkillSwap. Post your own skill to earn toward your goal, or trade instead of paying cash.', refs: skills });
-  if (listings.length) steps.push({ title: 'Buy used, not new', detail: 'If you need gear, these available listings are cheaper than buying new. Only buy what the trip actually requires.', refs: listings });
+  const first: PlanStep = !budgetCents
+    ? { title: 'Work out your target, then set a funding goal', detail: `Add up what you need, then create a goal for that amount (between $1 and ${cap}). We pre-filled the title "${draft.title}".`, refs: [] }
+    : budgetCents > MAX_GOAL_DOLLARS * 100
+      ? { title: `Fund part of your ${usd(budgetCents)} with a goal`, detail: `Funding goals go up to ${cap}, so start with a goal for one piece of the cost (pre-filled at ${cap}) and cover the rest with the ideas below.`, refs: [] }
+      : { title: `Set a ${usd(budgetCents)} funding goal`, detail: `Turn your plan into a goal classmates can chip in to. We pre-filled "${draft.title}" with your ${usd(budgetCents)} target; adjust it before saving.`, refs: [] };
+  const steps: PlanStep[] = [first];
+  if (events.length) steps.push({ title: 'Go to related events', detail: 'These upcoming StudentEconomy events match your plan: a good place to find teammates or share your goal.', refs: events });
+  if (goals.length) steps.push({ title: 'Team up with similar goals', detail: 'Other students are funding related plans. Compare targets or coordinate to share costs.', refs: goals });
+  if (skills.length) steps.push({ title: 'Trade skills instead of cash', detail: 'Students offer these related skills on SkillSwap.', refs: skills });
+  if (listings.length) steps.push({ title: 'Buy used, not new', detail: 'These available listings match what you described and cost less than new.', refs: listings });
+
+  const noMatches = [
+    !events.length && 'events', !goals.length && 'funding goals', !skills.length && 'SkillSwap skills', !listings.length && 'marketplace listings',
+  ].filter((x): x is string => !!x);
+  const nothing = noMatches.length === 4;
 
   return {
     mode: 'demo',
     modeNote: note,
     question,
     budgetCents,
-    summary: `Hi ${name}! Here's a step-by-step plan to reach ${budgetCents ? `${target}` : 'your goal'} using what's on StudentEconomy right now, plus a few general ideas to cut costs.`,
+    summary: nothing
+      ? `Hi ${name}! StudentEconomy doesn't have listings, events, goals, or skills that match this yet, so this plan focuses on your own funding goal and general ideas.`
+      : `Hi ${name}! Here's a plan to reach ${budgetCents ? usd(budgetCents) : 'your goal'} using matching resources on StudentEconomy, plus general ideas to close the gap.`,
     steps,
+    noMatches: nothing ? [] : noMatches,
     tips: [
-      ...(travel
-        ? [
-            'Check whether the event offers travel stipends, reimbursements, or free student tickets, and apply early.',
-            'Compare bus, train, and carpool options before booking rideshares or flights.',
-            'Split lodging with teammates, or ask about free housing hosted by the organizers.',
-          ]
-        : []),
-      'Ask your department, student government, or a club advisor whether they fund student travel or projects.',
-      'Pack snacks and reusable bottles to keep food costs down.',
+      ...(travel ? [
+        'Check whether the event offers travel stipends, reimbursements, or free student tickets, and apply early.',
+        'Compare bus, train, and carpool options before booking rideshares or flights.',
+        'Split lodging with teammates, or ask organizers about free housing.',
+        'Ask your department, student government, or club advisor whether they fund student travel.',
+      ] : []),
+      ...(tuition ? [
+        "Talk to your school's financial aid office about grants, payment plans, and work-study.",
+        "Make sure this year's financial aid application is complete and submitted on time.",
+        "Search your school's scholarship listings and apply to several smaller awards.",
+      ] : []),
+      'Offer a skill you have on SkillSwap (tutoring, design, resume help) to earn toward your goal.',
       'Track every expense in My Finances so you know exactly how much is left.',
     ],
     goal: draft,
@@ -148,10 +153,14 @@ async function livePlan(question: string, student: Student, data: Data): Promise
 Write a practical, encouraging action plan for the student's goal.
 STRICT RULES:
 - Only reference platform items by their exact key from the CATALOG (e.g. "listing:abc"). Never invent listings, goals, events, skills, or prices.
+- Reference an item ONLY if it directly helps with this specific goal. Referencing nothing is fine. Never pad the plan with unrelated items (e.g. no hackathon events or bike locks for a tuition question).
+- If no catalog item is relevant, say plainly in the summary that StudentEconomy doesn't currently have matching resources, and focus on a funding goal and general advice.
+- Funding goals support targets from $1 to $${MAX_GOAL_DOLLARS}; if the need is larger, suggest a goal for part of it.
 - Put general advice that is not a catalog item in "tips". Do not state specific outside prices, scholarships, or programs as facts.
 - Never tell the student a payment was made; payments always require their explicit approval in PayPal.
 Respond with ONLY a JSON object:
-{"summary": string, "steps": [{"title": string, "detail": string, "refs": [catalog keys]}] (3-5 steps), "tips": [string] (3-6), "goal": {"title": string, "target_dollars": number|null}}`;
+{"summary": string, "steps": [{"title": string, "detail": string, "refs": [catalog keys]}] (3-5 steps; each detail 1-2 short sentences), "tips": [string] (3-6, one sentence each), "goal": {"title": string, "target_dollars": number|null}}
+Keep the summary to 2-3 sentences. Output valid JSON only, with no markdown fences.`;
   const user = `Student: ${student.firstName || 'Student'} (${student.level.replace('_', ' ')})\nGoal: ${question}\n\nCATALOG (key | title | details):\n${catalog || '(empty)'}`;
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -163,15 +172,20 @@ Respond with ONLY a JSON object:
     },
     body: JSON.stringify({
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
-      max_tokens: 1500,
+      max_tokens: 3000,
       system,
       messages: [{ role: 'user', content: user }],
     }),
     signal: AbortSignal.timeout(30_000),
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`Anthropic API ${res.status}`);
-  const body = (await res.json()) as { content?: { type: string; text?: string }[] };
+  if (!res.ok) {
+    // Error bodies carry a type and message (never the key), e.g. "authentication_error: invalid x-api-key".
+    const e = (await res.json().catch(() => ({}))) as { error?: { type?: string; message?: string } };
+    throw new Error(`Anthropic API ${res.status} ${e.error?.type ?? ''}: ${(e.error?.message ?? '').slice(0, 120)}`);
+  }
+  const body = (await res.json()) as { content?: { type: string; text?: string }[]; stop_reason?: string };
+  if (body.stop_reason === 'max_tokens') throw new Error('Anthropic response was truncated (max_tokens)');
   const text = body.content?.find((c) => c.type === 'text')?.text ?? '';
   const json = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)) as {
     summary?: unknown; steps?: { title?: unknown; detail?: unknown; refs?: unknown }[]; tips?: unknown[]; goal?: { title?: unknown; target_dollars?: unknown };
@@ -189,13 +203,14 @@ Respond with ONLY a JSON object:
   const budgetCents = parseBudget(question);
   const draft = goalDraft(question, budgetCents);
   const aiTitle = s(json.goal?.title, 80);
-  const aiTarget = typeof json.goal?.target_dollars === 'number' && json.goal.target_dollars > 0 && json.goal.target_dollars <= 10_000 ? String(Math.round(json.goal.target_dollars)) : '';
+  const aiTarget = typeof json.goal?.target_dollars === 'number' && json.goal.target_dollars > 0 && json.goal.target_dollars <= MAX_GOAL_DOLLARS ?String(Math.round(json.goal.target_dollars)) : '';
   return {
     mode: 'live',
     question,
     budgetCents,
     summary: s(json.summary, 600),
     steps,
+    noMatches: [],
     tips: (Array.isArray(json.tips) ? json.tips : []).map((t) => s(t, 300)).filter(Boolean).slice(0, 6),
     goal: { ...draft, title: aiTitle.length >= 3 ? aiTitle : draft.title, target: aiTarget || draft.target },
   };
