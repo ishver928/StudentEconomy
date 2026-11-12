@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { query } from '@/lib/db';
 import { getStudent } from '@/lib/student';
 import { DbError, PageHeader, SampleBadge, SampleNotice, money } from '../ui';
@@ -7,10 +8,26 @@ export const metadata: Metadata = { title: 'My Finances' };
 
 type Expense = { id: string; category: string; description: string | null; amount_cents: number; spent_on: Date; is_sample: boolean };
 
+type Purchase = {
+  id: string; title: string | null; amount_cents: number; currency: string; created_at: Date;
+  paypal_order_id: string; status: string; needs_review: boolean;
+};
+
 export default async function FinancesPage() {
   const student = await getStudent();
   let expenses: Expense[];
+  let purchases: Purchase[];
   try {
+    // Only completed purchases (orders) for the current student; pending checkouts never appear here.
+    purchases = student
+      ? await query<Purchase>(
+          `SELECT o.id, l.title, o.amount_cents, o.currency, o.created_at, o.paypal_order_id, o.status, o.needs_review
+           FROM orders o LEFT JOIN listings l ON l.id = o.listing_id
+           WHERE o.buyer_id = $1 AND o.kind = 'purchase' AND o.status = 'COMPLETED'
+           ORDER BY o.created_at DESC LIMIT 200`,
+          [student.id],
+        )
+      : [];
     const sql = `SELECT id, category, description, amount_cents, spent_on, is_sample
                  FROM expenses WHERE user_id = $1 ORDER BY spent_on DESC, id LIMIT 200`;
     expenses = student ? await query<Expense>(sql, [student.id]) : [];
@@ -34,6 +51,38 @@ export default async function FinancesPage() {
   return (
     <div className="se-page">
       <PageHeader emoji="🐷" title="My Finances">A friendly look at where your money goes.</PageHeader>
+
+      <section className="se-card mb-6 p-6" aria-labelledby="sandbox-tx">
+        <h2 id="sandbox-tx" className="text-lg font-extrabold">Sandbox Transactions</h2>
+        <p className="text-sm text-se-charcoal/70">🧪 PayPal Sandbox — No Real Money. Only completed purchases appear here.</p>
+        <div className="mt-3 flex flex-wrap gap-6">
+          <p><span className="block text-sm font-bold text-se-charcoal/60">Total purchases</span><span className="text-2xl font-extrabold">{purchases.length}</span></p>
+          <p><span className="block text-sm font-bold text-se-charcoal/60">Total spending</span><span className="text-2xl font-extrabold">{money(purchases.reduce((s, p) => s + p.amount_cents, 0))}</span></p>
+        </div>
+        {purchases.length === 0 ? (
+          <p className="mt-3 text-se-charcoal/70">No sandbox purchases yet. Try buying something in the Marketplace.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[36rem] text-left text-sm">
+              <thead className="text-se-charcoal/60">
+                <tr><th className="py-2 pr-3">Date</th><th className="pr-3">Item</th><th className="pr-3">Amount</th><th className="pr-3">PayPal order ID</th><th>Status</th></tr>
+              </thead>
+              <tbody className="divide-y-2 divide-se-cream">
+                {purchases.map((p) => (
+                  <tr key={p.id}>
+                    <td className="py-2 pr-3">{new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                    <td className="pr-3 font-semibold"><Link href={`/marketplace/confirmation/${p.id}`} className="underline">{p.title ?? 'Listing'}</Link></td>
+                    <td className="pr-3 font-extrabold">{money(p.amount_cents)}</td>
+                    <td className="pr-3 font-mono text-xs">{p.paypal_order_id}</td>
+                    <td>{p.status}{p.needs_review && ' (review)'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {isSample && <SampleNotice />}
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
         <section className="se-card p-6">

@@ -40,7 +40,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
         {student ? children : <Onboarding schoolSuggestions={await schoolSuggestions()} />}
       </main>
       <footer className="px-4 py-6 text-center text-sm text-se-charcoal/60">
-        StudentEconomy · Sandbox prototype · <Link href="/dashboard" className="underline">PayPal data dashboard</Link>
+        StudentEconomy · Sandbox prototype · Demo-only identity (browser cookie, not real sign-in) · <Link href="/dashboard" className="underline">PayPal data dashboard</Link>
       </footer>
     </div>
   );
