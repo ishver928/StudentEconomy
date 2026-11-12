@@ -22,6 +22,7 @@ export default async function NewGoalPage({ searchParams }: PageProps<'/goals/ne
           description: str(sp.description, 500),
           target: /^\d{1,6}(\.\d{1,2})?$/.test(target) ? target : '',
           kind: ['personal', 'club', 'travel'].includes(kind) ? kind : 'travel',
+          plan: str(sp.plan, 64), // a travel plan to link the new goal to (ownership checked on save)
         }}
       />
     </div>

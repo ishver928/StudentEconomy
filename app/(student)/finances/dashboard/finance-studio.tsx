@@ -63,6 +63,7 @@ function buildData(d: FinanceData): AgDataSourcesDefinition {
           ['remaining', 'Remaining', 'currencyFormat'],
           ['label', 'Data', 'textFormat'],
           ['status', 'Goal Status', 'textFormat'],
+          ['linkedTo', 'Linked To', 'textFormat'],
         ]),
       },
       {
@@ -74,6 +75,7 @@ function buildData(d: FinanceData): AgDataSourcesDefinition {
           ['id', 'Contribution ID', 'textFormat', true],
           ['date', 'Received On', 'dateFormat'],
           ['goal', 'Goal', 'textFormat'],
+          ['linkedTo', 'Linked To', 'textFormat'],
           ['amount', 'Funding Received', 'currencyFormat'],
           ['environment', 'Environment', 'textFormat'],
         ]),
@@ -192,13 +194,13 @@ const buildReport = (FONT: string): AgReportState => ({
         'goals-grid': {
           type: 'grid',
           dataMapping: {
-            cols: [{ id: 'goals.title' }, { id: 'goals.kind' }, sum('goals.raised'), sum('goals.target'), sum('goals.remaining'), { id: 'goals.status' }, { id: 'goals.label' }],
+            cols: [{ id: 'goals.title' }, { id: 'goals.kind' }, sum('goals.raised'), sum('goals.target'), sum('goals.remaining'), { id: 'goals.status' }, { id: 'goals.linkedTo' }, { id: 'goals.label' }],
           },
           format: title('Goal details'),
         },
         'received-grid': {
           type: 'grid',
-          dataMapping: { cols: [{ id: 'received.date' }, { id: 'received.goal' }, sum('received.amount')] },
+          dataMapping: { cols: [{ id: 'received.date' }, { id: 'received.goal' }, { id: 'received.linkedTo' }, sum('received.amount')] },
           sort: [{ field: { id: 'received.date' }, direction: 'desc' }],
           format: title('Funding received toward my goals'),
         },

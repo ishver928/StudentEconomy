@@ -174,3 +174,34 @@ body {
   .se-island, .se-cloud, .se-mascot-arm { animation: none; }
   .se-island svg { transition: none; }
 }
+
+/* Travel map (app/(student)/travel/travel-map.tsx): softer, pastel-toned tiles and emoji pins. */
+.se-map {
+  background: #dff1fb;
+  font-family: inherit;
+}
+.se-map .leaflet-tile-pane {
+  filter: saturate(0.65) brightness(1.04) sepia(0.12) hue-rotate(-6deg);
+}
+.se-map .leaflet-popup-content-wrapper {
+  border-radius: 1rem;
+  box-shadow: 0 6px 0 rgb(59 54 51 / 0.08);
+}
+.se-pin {
+  display: grid;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 3px 8px rgb(59 54 51 / 0.25);
+  font-size: 15px;
+  line-height: 1;
+}
+.se-map-btn {
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--se-charcoal);
+  color: var(--se-cream);
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 12px;
+}

@@ -15,6 +15,7 @@
     "ag-grid-react": "36.2.0",
     "ag-studio": "3.0.0",
     "ag-studio-react": "3.0.0",
+    "leaflet": "1.9.4",
     "next": "16.3.6",
     "pg": "^8.23.1",
     "react": "19.2.8",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",

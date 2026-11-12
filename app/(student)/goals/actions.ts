@@ -1,6 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
 import { query } from '@/lib/db';
+import { isValidId } from '@/lib/checkout';
 import { parseDollars } from '@/lib/contribution';
 import { getStudent } from '@/lib/student';
 
@@ -41,6 +42,11 @@ export async function createGoal(_prev: GoalFormState, form: FormData): Promise<
     );
   } catch {
     return { error: "We couldn't save your goal right now. Please try again." };
+  }
+  // Optional: link to the student's own travel plan (ignored if it isn't theirs or already linked).
+  const plan = String(form.get('plan') ?? '');
+  if (isValidId(plan)) {
+    await query(`UPDATE travel_plans SET goal_id = $1 WHERE id = $2 AND user_id = $3 AND goal_id IS NULL AND deleted_at IS NULL`, [id, plan, student.id]).catch(() => {});
   }
   redirect(`/goals/${id}?created=1`);
 }

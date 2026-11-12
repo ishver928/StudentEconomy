@@ -82,6 +82,32 @@ const events = [
   ['sample-event-2', 'Hackathon Prep Night and Team Mixer', 'Coding Club', UG, 'Find teammates, practice pitching, and learn how to budget a hackathon trip.', 'Engineering Building, Room 110', '2026-11-20T18:30:00-08:00', 'sample-goal-2'],
 ];
 
+// ---- Phase 4: travel demo. Real places, fictional event and students. ----------------------
+// [id, owner, title, kind, target, saved, description, deadline]
+const goals4 = [
+  ['sample-goal-4', 'sample-user-2', 'Golden Gate Student Hackathon: snacks and prizes', 'club', 50000, 12500, 'Food for 120 hackers plus small prizes for the top three teams.', '2026-12-04'],
+];
+// [id, title, club, school, description, location, starts_at, goal, category, budget_cents, purpose, lat, lng]
+const events4 = [
+  ['sample-event-3', 'Golden Gate Student Hackathon', 'Coding Club', UG, 'A fictional 24-hour student hackathon at a real San Francisco venue. Teams of up to four build projects for social good.',
+    'Fort Mason Center, San Francisco, CA', '2026-12-05T09:00:00-08:00', 'sample-goal-4', 'Hackathon', 90000, 'Meals for 120 hackers and prizes for the top three teams.', 37.8059, -122.4320],
+];
+// [event, user, status]
+const rsvps = [
+  ['sample-event-3', 'sample-user-2', 'going'], ['sample-event-3', 'sample-user-3', 'going'],
+  ['sample-event-3', 'sample-user-4', 'going'], ['sample-event-3', 'sample-user-1', 'interested'],
+];
+// Approximate origin areas only (city-level, coordinates rounded to ~2 km).
+// [id, user, origin_area, olat, olng, dest_label, dlat, dlng, date, window, mode, event, est_cost_cents]
+const plans = [
+  ['sample-plan-1', 'sample-user-2', 'Berkeley, CA', 37.87, -122.27, 'Fort Mason Center, San Francisco', 37.8059, -122.432, '2026-12-05', 'morning', 'carpool', 'sample-event-3', 4000],
+  ['sample-plan-2', 'sample-user-3', 'Oakland, CA', 37.8, -122.27, 'Fort Mason Center, San Francisco', 37.8059, -122.432, '2026-12-05', 'morning', 'either', 'sample-event-3', 1200],
+  ['sample-plan-3', 'sample-user-4', 'Palo Alto, CA', 37.44, -122.14, 'Fort Mason Center, San Francisco', 37.8059, -122.432, '2026-12-05', 'morning', 'transit', 'sample-event-3', 2400],
+  ['sample-plan-4', 'sample-user-1', 'San Jose, CA', 37.34, -121.88, 'San Francisco, CA', 37.7793, -122.4193, '2026-12-04', 'evening', 'carpool', null, 3000],
+];
+const carpools = [['sample-carpool-1', 'sample-user-2', 'sample-plan-1', 'East Bay to the hackathon', 4, 4000]];
+const carpoolMembers = [['sample-carpool-1', 'sample-user-3', 'joined']];
+
 const inserts = [
   ['users', 'INSERT INTO users (id, first_name, school, education_level, is_sample) VALUES ($1,$2,$3,$4,true) ON CONFLICT DO NOTHING', users],
   ['listings', 'INSERT INTO listings (id, seller_id, title, category, condition, price_cents, school, description, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT DO NOTHING', listings],
@@ -91,6 +117,12 @@ const inserts = [
   ['goals', 'INSERT INTO goals (id, user_id, title, kind, target_cents, saved_cents, is_sample) VALUES ($1,$2,$3,$4,$5,$6,true) ON CONFLICT DO NOTHING', goals],
   ['goals2', 'INSERT INTO goals (id, user_id, title, kind, target_cents, saved_cents, description, deadline, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT DO NOTHING', goals2],
   ['events', 'INSERT INTO events (id, title, club_name, school, description, location, starts_at, goal_id, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT DO NOTHING', events],
+  ['goals4', 'INSERT INTO goals (id, user_id, title, kind, target_cents, saved_cents, description, deadline, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT DO NOTHING', goals4],
+  ['events4', 'INSERT INTO events (id, title, club_name, school, description, location, starts_at, goal_id, category, budget_cents, funding_purpose, lat, lng, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true) ON CONFLICT DO NOTHING', events4],
+  ['event_rsvps', 'INSERT INTO event_rsvps (event_id, user_id, status, is_sample) VALUES ($1,$2,$3,true) ON CONFLICT DO NOTHING', rsvps],
+  ['travel_plans', 'INSERT INTO travel_plans (id, user_id, origin_area, origin_lat, origin_lng, dest_label, dest_lat, dest_lng, depart_date, depart_window, travel_mode, event_id, est_cost_cents, match_opt_in, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,true) ON CONFLICT DO NOTHING', plans],
+  ['carpool_groups', 'INSERT INTO carpool_groups (id, owner_id, plan_id, title, seats, shared_cost_cents, is_sample) VALUES ($1,$2,$3,$4,$5,$6,true) ON CONFLICT DO NOTHING', carpools],
+  ['carpool_members', 'INSERT INTO carpool_members (group_id, user_id, status) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING', carpoolMembers],
 ];
 
 const client = connect();
