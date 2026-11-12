@@ -114,3 +114,63 @@ body {
     @apply rounded-full bg-se-charcoal px-6 py-3 text-lg font-extrabold text-se-cream transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-se-lavender disabled:opacity-60;
   }
 }
+
+/* Floating-island homepage (app/(student)/islands.tsx). */
+.se-sky {
+  background: linear-gradient(180deg, #bfe3f7 0%, #dff1fb 55%, var(--se-cream) 100%);
+}
+.se-cloud {
+  position: absolute;
+  aspect-ratio: 3 / 1;
+  border-radius: 999px;
+  background: #fff;
+  opacity: 0.8;
+  animation: se-drift 24s ease-in-out infinite alternate;
+}
+.se-cloud::before {
+  content: "";
+  position: absolute;
+  left: 22%;
+  bottom: 40%;
+  width: 45%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: #fff;
+}
+.se-island {
+  animation: se-float 6s ease-in-out infinite;
+  transition: transform 0.2s ease, filter 0.2s ease;
+  outline: none;
+}
+.se-island svg {
+  transition: transform 0.25s ease;
+  filter: drop-shadow(0 14px 10px rgb(59 54 51 / 0.12));
+}
+.se-island:hover svg,
+.se-island:focus-visible svg {
+  transform: translateY(-6px) scale(1.06) rotate(-1.5deg);
+}
+.se-island:focus-visible {
+  box-shadow: 0 0 0 4px var(--se-cream), 0 0 0 8px var(--se-sky-dark);
+}
+.se-mascot-arm {
+  transform-origin: 86px 92px;
+  animation: se-wave 2.4s ease-in-out infinite;
+}
+@keyframes se-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes se-drift {
+  from { transform: translateX(-20px); }
+  to { transform: translateX(30px); }
+}
+@keyframes se-wave {
+  0%, 60%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-14deg); }
+  40% { transform: rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .se-island, .se-cloud, .se-mascot-arm { animation: none; }
+  .se-island svg { transition: none; }
+}
