@@ -1,0 +1,76 @@
+import type { Metadata } from 'next';
+import { query } from '@/lib/db';
+import { getStudent } from '@/lib/student';
+import { DbError, PageHeader, SampleBadge, SampleNotice, money } from '../ui';
+
+export const metadata: Metadata = { title: 'My Finances' };
+
+type Expense = { id: string; category: string; description: string | null; amount_cents: number; spent_on: Date; is_sample: boolean };
+
+export default async function FinancesPage() {
+  const student = await getStudent();
+  let expenses: Expense[];
+  try {
+    const sql = `SELECT id, category, description, amount_cents, spent_on, is_sample
+                 FROM expenses WHERE user_id = $1 ORDER BY spent_on DESC, id LIMIT 200`;
+    expenses = student ? await query<Expense>(sql, [student.id]) : [];
+    if (expenses.length === 0) {
+      // No expenses of their own yet: show a sample student's budget, clearly labelled.
+      expenses = await query<Expense>(
+        `SELECT id, category, description, amount_cents, spent_on, is_sample
+         FROM expenses WHERE is_sample ORDER BY spent_on DESC, id LIMIT 200`,
+      );
+    }
+  } catch {
+    return <div className="se-page"><PageHeader emoji="🐷" title="My Finances" /><DbError /></div>;
+  }
+
+  const isSample = expenses.some((e) => e.is_sample);
+  const total = expenses.reduce((sum, e) => sum + e.amount_cents, 0);
+  const byCategory = Object.entries(
+    expenses.reduce<Record<string, number>>((acc, e) => ({ ...acc, [e.category]: (acc[e.category] ?? 0) + e.amount_cents }), {}),
+  ).sort((a, b) => b[1] - a[1]);
+
+  return (
+    <div className="se-page">
+      <PageHeader emoji="🐷" title="My Finances">A friendly look at where your money goes.</PageHeader>
+      {isSample && <SampleNotice />}
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+        <section className="se-card p-6">
+          <h2 className="flex items-center gap-2 text-lg font-extrabold">Spending by category {isSample && <SampleBadge />}</h2>
+          <p className="mt-1 text-3xl font-extrabold">{money(total)}</p>
+          <ul className="mt-4 grid gap-3">
+            {byCategory.map(([category, cents]) => (
+              <li key={category}>
+                <div className="flex justify-between text-sm font-semibold"><span>{category}</span><span>{money(cents)}</span></div>
+                <div className="mt-1 h-3 rounded-full bg-se-cream ring-1 ring-se-charcoal/10">
+                  <div className="h-full rounded-full bg-se-peach" style={{ width: `${total ? (cents / total) * 100 : 0}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className="se-card p-6">
+          <h2 className="text-lg font-extrabold">Recent expenses</h2>
+          {expenses.length === 0 ? (
+            <p className="mt-2 text-se-charcoal/70">No expenses yet.</p>
+          ) : (
+            <ul className="mt-3 divide-y-2 divide-se-cream">
+              {expenses.map((e) => (
+                <li key={e.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div>
+                    <p className="font-semibold">{e.description ?? e.category}</p>
+                    <p className="text-xs text-se-charcoal/60">
+                      {e.category} · {new Date(e.spent_on).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                    </p>
+                  </div>
+                  <span className="font-extrabold">{money(e.amount_cents)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}

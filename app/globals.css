@@ -61,3 +61,56 @@ body {
   --color-pp-danger: var(--pp-danger);
   --font-paypal: var(--pp-font);
 }
+
+/*
+ * StudentEconomy theme: cozy, playful palette for the student pages in app/(student).
+ */
+:root {
+  --se-sky: #9fd3f0;
+  --se-sky-dark: #4a9fcf;
+  --se-cream: #fff8ec;
+  --se-sage: #b5d3a8;
+  --se-sage-dark: #5e8a52;
+  --se-peach: #ffc9a8;
+  --se-lavender: #d7c4f0;
+  --se-charcoal: #3b3633;
+}
+
+@theme inline {
+  --color-se-sky: var(--se-sky);
+  --color-se-sky-dark: var(--se-sky-dark);
+  --color-se-cream: var(--se-cream);
+  --color-se-sage: var(--se-sage);
+  --color-se-sage-dark: var(--se-sage-dark);
+  --color-se-peach: var(--se-peach);
+  --color-se-lavender: var(--se-lavender);
+  --color-se-charcoal: var(--se-charcoal);
+  --font-rounded: var(--font-nunito), ui-rounded, "Segoe UI", sans-serif;
+}
+
+.se-app {
+  background: var(--se-cream);
+  color: var(--se-charcoal);
+  font-family: var(--font-nunito), ui-rounded, "Segoe UI", sans-serif;
+}
+
+@layer components {
+  .se-page {
+    @apply mx-auto w-full max-w-6xl px-4 py-8;
+  }
+  .se-card {
+    @apply rounded-3xl border-2 border-se-charcoal/10 bg-white shadow-[0_6px_0_rgb(59_54_51/0.08)];
+  }
+  .se-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-se-lavender;
+  }
+  .se-input {
+    @apply rounded-2xl border-2 border-se-charcoal/15 bg-se-cream px-4 py-2.5 outline-none focus:border-se-sky-dark focus:ring-4 focus:ring-se-sky/50;
+  }
+  .se-choice > span {
+    @apply block cursor-pointer rounded-2xl border-2 border-se-charcoal/15 bg-se-cream px-3 py-2.5 text-center font-semibold transition-colors hover:bg-se-sky/40;
+  }
+  .se-button {
+    @apply rounded-full bg-se-charcoal px-6 py-3 text-lg font-extrabold text-se-cream transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-se-lavender disabled:opacity-60;
+  }
+}
