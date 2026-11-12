@@ -52,6 +52,13 @@ export default async function FinancesPage() {
   return (
     <div className="se-page">
       <PageHeader emoji="🐷" title="My Finances">A friendly look at where your money goes.</PageHeader>
+      <Link href="/finances/dashboard" className="se-card mb-6 flex items-center gap-4 bg-gradient-to-r from-se-sky/50 via-se-lavender/50 to-se-peach/50 p-5 transition-transform hover:-translate-y-0.5">
+        <span className="text-4xl" aria-hidden>📊</span>
+        <span>
+          <span className="block text-lg font-extrabold">Open my Financial Command Center →</span>
+          <span className="text-sm text-se-charcoal/75">Interactive charts, filters, and goal progress, powered by AG Studio.</span>
+        </span>
+      </Link>
 
       <section className="se-card mb-6 p-6" aria-labelledby="sandbox-tx">
         <h2 id="sandbox-tx" className="text-lg font-extrabold">Sandbox Transactions</h2>
