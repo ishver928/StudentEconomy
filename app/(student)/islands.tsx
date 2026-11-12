@@ -100,6 +100,7 @@ export function IslandWorld({ name }: { name: string }) {
           <div>
             <h1 id="world-title" className="text-3xl font-extrabold sm:text-5xl">Hi, {name}!</h1>
             <p className="mt-1 text-lg text-se-charcoal/80">Welcome to your floating campus. Pick an island to explore.</p>
+            <Link href="/navigator" className="se-pill mt-3 inline-block bg-white/85 hover:bg-white">🧭 Ask the AI Navigator to plan a goal</Link>
           </div>
         </div>
 

@@ -6,7 +6,12 @@ import { SECTIONS } from './sections';
 
 export function Nav() {
   const pathname = usePathname();
-  const links = [{ href: '/', label: 'Home', emoji: '🏠' }, ...SECTIONS];
+  const links = [
+    { href: '/', label: 'Home', emoji: '🏠' },
+    { href: '/navigator', label: 'AI Navigator', emoji: '🧭' },
+    ...SECTIONS,
+    { href: '/goals', label: 'Funding Goals', emoji: '🎯' },
+  ];
 
   return (
     <nav aria-label="Main" className="overflow-x-auto">

@@ -6,8 +6,8 @@ export const PICKUP_LABELS: Record<string, string> = {
 };
 export const pickupLabel = (p: string | null) => (p ? PICKUP_LABELS[p] ?? p : 'Ask the seller');
 
-export function FictionalBadge() {
-  return <span className="inline-block rounded-full bg-se-lavender px-2.5 py-0.5 text-xs font-bold">Fictional sample listing</span>;
+export function FictionalBadge({ label = 'Fictional sample listing' }: { label?: string }) {
+  return <span className="inline-block rounded-full bg-se-lavender px-2.5 py-0.5 text-xs font-bold">{label}</span>;
 }
 
 export function AvailabilityBadge({ status }: { status: string }) {
@@ -36,12 +36,15 @@ const MESSAGES: Record<string, { tone: 'ok' | 'warn' | 'bad'; text: string; retr
   verification_failed: { tone: 'bad', text: "The PayPal order didn't match this checkout, so we didn't take payment." },
   needs_review: { tone: 'warn', text: 'This payment needs a manual review. It has been flagged.' },
   in_progress: { tone: 'warn', text: 'A checkout for this item is already starting. Give it a moment, then try again.' },
-  no_user: { tone: 'bad', text: 'Please finish setting up your profile (Change preferences) before buying.' },
+  no_user: { tone: 'bad', text: 'Please finish setting up your profile (Change preferences) before paying.' },
   paypal_unavailable: { tone: 'bad', text: "We couldn't reach PayPal sandbox. Nothing was charged. Please try again." },
+  invalid_goal: { tone: 'bad', text: "We couldn't find that funding goal." },
+  invalid_amount: { tone: 'bad', text: 'Please enter an amount between $1 and $1,000 (up to 2 decimal places).' },
+  goal_funded: { tone: 'ok', text: 'This goal is already fully funded. Thank you!' },
   error: { tone: 'bad', text: 'Something went wrong starting checkout. Nothing was charged. Please try again.' },
 };
 
-export function CheckoutMessage({ code, order }: { code?: string; order?: string }) {
+export function CheckoutMessage({ code, order, retryPath = '/api/checkout/return' }: { code?: string; order?: string; retryPath?: string }) {
   const m = code ? MESSAGES[code] : undefined;
   if (!m) return null;
   const color = m.tone === 'ok' ? 'bg-se-sage/70' : m.tone === 'warn' ? 'bg-se-peach/70' : 'bg-[#ffb3a7]/70';
@@ -50,7 +53,7 @@ export function CheckoutMessage({ code, order }: { code?: string; order?: string
     <div role="status" className={`mb-6 rounded-2xl px-4 py-3 font-semibold ${color}`}>
       {m.text}
       {m.retry && validOrder && (
-        <a className="ml-2 underline" href={`/api/checkout/return?token=${encodeURIComponent(order)}`}>Check again</a>
+        <a className="ml-2 underline" href={`${retryPath}?token=${encodeURIComponent(order)}`}>Check again</a>
       )}
     </div>
   );

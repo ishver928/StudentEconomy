@@ -71,8 +71,15 @@ const skills = [
 
 const goals = [['sample-goal-1', 'sample-user-3', 'Robotics Club regional trip', 'club', 120000, 45000]];
 
+// [id, owner, title, kind, target, saved, description, deadline] (Phase 3)
+const goals2 = [
+  ['sample-goal-2', 'sample-user-1', 'Hackathon team travel fund', 'travel', 60000, 21000, 'Bus fare, a shared room and meals for four students attending a weekend hackathon.', '2026-12-10'],
+  ['sample-goal-3', 'sample-user-4', 'Research poster printing', 'personal', 15000, 4000, 'Printing a conference poster for an undergraduate research symposium.', '2026-12-01'],
+];
+
 const events = [
   ['sample-event-1', 'Robot Showcase and Bake Sale', 'Robotics Club', UG, 'Demo night raising funds for the regional competition trip.', 'Student Union, Room 204', '2026-12-04T18:00:00-08:00', 'sample-goal-1'],
+  ['sample-event-2', 'Hackathon Prep Night and Team Mixer', 'Coding Club', UG, 'Find teammates, practice pitching, and learn how to budget a hackathon trip.', 'Engineering Building, Room 110', '2026-11-20T18:30:00-08:00', 'sample-goal-2'],
 ];
 
 const inserts = [
@@ -82,6 +89,7 @@ const inserts = [
   ['profiles', 'INSERT INTO profiles (id, user_id, display_name, school, education_level, major, bio, interests, opt_in, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,true) ON CONFLICT DO NOTHING', profiles],
   ['skills', 'INSERT INTO skills (id, user_id, title, category, rate_cents, description, is_sample) VALUES ($1,$2,$3,$4,$5,$6,true) ON CONFLICT DO NOTHING', skills],
   ['goals', 'INSERT INTO goals (id, user_id, title, kind, target_cents, saved_cents, is_sample) VALUES ($1,$2,$3,$4,$5,$6,true) ON CONFLICT DO NOTHING', goals],
+  ['goals2', 'INSERT INTO goals (id, user_id, title, kind, target_cents, saved_cents, description, deadline, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT DO NOTHING', goals2],
   ['events', 'INSERT INTO events (id, title, club_name, school, description, location, starts_at, goal_id, is_sample) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true) ON CONFLICT DO NOTHING', events],
 ];
 

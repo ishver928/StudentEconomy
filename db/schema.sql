@@ -141,3 +141,30 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS needs_review BOOLEAN NOT NULL DEFAUL
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS review_reason TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS orders_checkout_id_uniq ON orders (checkout_id);
 CREATE INDEX IF NOT EXISTS orders_buyer_idx ON orders (buyer_id);
+
+-- ---- Phase 3: funding goals + contributions (additive only) ----------------------------
+
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS deadline DATE;
+
+-- One row per contribution attempt. Goal progress (goals.saved_cents) only moves when a
+-- contribution order is recorded after PayPal reports the capture as COMPLETED.
+CREATE TABLE IF NOT EXISTS goal_checkouts (
+  id                TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  buyer_id          TEXT NOT NULL REFERENCES users(id),
+  goal_id           TEXT NOT NULL REFERENCES goals(id),
+  amount_cents      INTEGER NOT NULL CHECK (amount_cents > 0),
+  currency          TEXT NOT NULL DEFAULT 'USD',
+  paypal_order_id   TEXT UNIQUE,
+  paypal_capture_id TEXT UNIQUE,
+  approve_url       TEXT,
+  status            TEXT NOT NULL DEFAULT 'creating' CHECK (status IN (
+                      'creating', 'pending', 'cancelled', 'failed', 'abandoned', 'declined',
+                      'capture_pending', 'capture_unrecorded', 'completed', 'needs_review')),
+  note              TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS goal_checkouts_open_uniq
+  ON goal_checkouts (buyer_id, goal_id) WHERE status IN ('creating', 'pending');

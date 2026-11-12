@@ -18,11 +18,11 @@ export const isValidPayPalId = (id: unknown): id is string => typeof id === 'str
 
 // "1234" cents -> "12.34", exactly as PayPal formats USD amounts.
 export const toValue = (cents: number) => `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, '0')}`;
-const sameMoney = (m: Money | undefined, cents: number, currency: string) =>
+export const sameMoney = (m: Money | undefined, cents: number, currency: string) =>
   m?.currency_code === currency && m?.value === toValue(cents);
 
 // Logs ids and error names only: never request bodies, tokens or credentials.
-function logError(event: string, ids: Record<string, string | undefined>, err?: unknown) {
+export function logError(event: string, ids: Record<string, string | undefined>, err?: unknown) {
   const detail = err instanceof Error ? `${err.name}${paypalIssue(err) ? `:${paypalIssue(err)}` : ''}` : undefined;
   console.error(`[checkout] ${event}`, { ...ids, error: detail });
 }
